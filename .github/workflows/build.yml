@@ -23,8 +23,26 @@ jobs:
           yes | sdkmanager --licenses || true
           sdkmanager "platforms;android-34" "build-tools;34.0.0" "platform-tools" || true
 
-      - name: Grant gradlew permission
-        run: chmod +x gradlew
+      - name: Fix gradlew line endings
+        run: |
+          sed -i 's/\r$//' gradlew || true
+          chmod +x gradlew
+
+      - name: Ensure gradle wrapper exists
+        run: |
+          mkdir -p gradle/wrapper
+          if [ ! -f gradle/wrapper/gradle-wrapper.properties ]; then
+            cat > gradle/wrapper/gradle-wrapper.properties <<'EOF'
+          distributionBase=GRADLE_USER_HOME
+          distributionPath=wrapper/dists
+          distributionUrl=https\://services.gradle.org/distributions/gradle-8.5-bin.zip
+          zipStoreBase=GRADLE_USER_HOME
+          zipStorePath=wrapper/dists
+          EOF
+          fi
+          if [ ! -f gradle/wrapper/gradle-wrapper.jar ]; then
+            curl -L -o gradle/wrapper/gradle-wrapper.jar https://github.com/android/architecture-samples/raw/main/gradle/wrapper/gradle-wrapper.jar
+          fi
 
       - name: Build Debug APK
         run: ./gradlew assembleDebug --stacktrace
